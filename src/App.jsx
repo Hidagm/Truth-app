@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const V={from:"#34d399",to:"#818cf8",mid:"#6ee7b7",bg:"#060d09",card:"#090f0b",border:"#34d39918",borderMid:"#34d39932",text:"#c8ecd8",muted:"#2a4a36",mutedHi:"#3d6b4f",danger:"#f87171",dangerBg:"#f8717114",warn:"#fbbf24",gold:"#f59e0b",goldBg:"#f59e0b14"};
 const F="'DM Sans',system-ui,sans-serif";
