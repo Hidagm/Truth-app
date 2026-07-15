@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const V={from:"#34d399",to:"#818cf8",mid:"#6ee7b7",bg:"#060d09",card:"#090f0b",border:"#34d39918",borderMid:"#34d39932",text:"#c8ecd8",muted:"#2a4a36",mutedHi:"#3d6b4f",danger:"#f87171",dangerBg:"#f8717114",warn:"#fbbf24",gold:"#f59e0b",goldBg:"#f59e0b14"};
 const F="'DM Sans',system-ui,sans-serif";
@@ -177,7 +177,7 @@ function Verify(props){
   var _dq=useState("");var dialQ=_dq[0];var setDialQ=_dq[1];
   var _ph=useState("");var phone=_ph[0];var setPhone=_ph[1];
   var _em=useState("");var email=_em[0];var setEmail=_em[1];
-  var _ue=useState(false);var useEmail=_ue[0];var setUseEmail=_ue[1];
+  var _ue=useState(true);var useEmail=_ue[0];var setUseEmail=_ue[1];
   var _ot=useState("");var otp=_ot[0];var setOtp=_ot[1];
   var _dd=useState("");var dobD=_dd[0];var setDobD=_dd[1];
   var _dm=useState("");var dobM=_dm[0];var setDobM=_dm[1];
@@ -240,9 +240,9 @@ function Verify(props){
       <Orb style={{width:180,height:180,background:V.to,top:-20,right:-50}}/>
       <Nav onBack={props.onBack} title="verification"/><LR/>
       <SH>We verify everyone.</SH><ST>Contact, age, then a quick selfie. You can stay anonymous after this.</ST>
-      <div style={{display:"flex",gap:"8px",marginBottom:"18px"}}>
-        <button onClick={function(){setUseEmail(false);}} style={{flex:1,padding:"9px",borderRadius:"10px",border:"1px solid "+(useEmail===false?V.from:V.border),background:useEmail===false?V.from+"14":V.card,color:useEmail===false?V.from:V.muted,fontSize:"13px",cursor:"pointer",fontFamily:F}}>📱 Phone</button>
-        <button onClick={function(){setUseEmail(true);}} style={{flex:1,padding:"9px",borderRadius:"10px",border:"1px solid "+(useEmail===true?V.from:V.border),background:useEmail===true?V.from+"14":V.card,color:useEmail===true?V.from:V.muted,fontSize:"13px",cursor:"pointer",fontFamily:F}}>✉️ Email</button>
+      <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 14px",borderRadius:"12px",background:V.from+"08",border:"1px solid "+V.border,marginBottom:"18px"}}>
+        <span style={{fontSize:"18px"}}>✉️</span>
+        <span style={{color:V.mid,fontSize:"13px",fontFamily:F,fontWeight:"600"}}>Email verification</span>
       </div>
       {step==="contact"&&<div>
         {!useEmail&&<div>
@@ -293,25 +293,33 @@ function Verify(props){
         <GBtn onClick={function(){setStep("otp");setDobErr("");}}>← Back</GBtn>
       </div>}
       {step==="selfie"&&<div>
-        <FL>Selfie Verification</FL>
-        <p style={{color:V.muted,fontSize:"12px",fontFamily:F,marginBottom:"14px",lineHeight:1.5}}>A quick selfie confirms you're a real person. Never shown to others.</p>
-        {selfSt==="idle"&&<button onClick={openCam} style={{width:"100%",padding:"28px 20px",borderRadius:"16px",border:"2px dashed "+V.border,background:V.card,color:V.mutedHi,fontSize:"14px",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",gap:"10px"}}><span style={{fontSize:"34px"}}>📷</span><span>Tap to open front camera</span></button>}
+        <FL>ID Verification</FL>
+        <div style={{padding:"12px 14px",borderRadius:"12px",background:V.from+"08",border:"1px solid "+V.border,marginBottom:"14px"}}>
+          <p style={{color:V.mid,fontSize:"13px",fontFamily:F,fontWeight:"600",marginBottom:"4px"}}>📸 Selfie holding your ID</p>
+          <p style={{color:V.muted,fontSize:"11px",fontFamily:F,lineHeight:1.6}}>Hold your ID, Passport or Driver's Licence next to your face so both are clearly visible. Used for age verification only — never shown to others.</p>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:"6px",marginBottom:"14px"}}>
+          {["🪪 National ID card","📘 Passport","🚗 Driver's licence"].map(function(item){return <div key={item} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",borderRadius:"10px",background:"#0a140c",border:"1px solid "+V.border}}><span style={{fontSize:"15px"}}>{item.split(" ")[0]}</span><span style={{color:V.mutedHi,fontSize:"12px",fontFamily:F}}>{item.split(" ").slice(1).join(" ")}</span></div>;})}
+        </div>
+        {selfSt==="idle"&&<button onClick={openCam} style={{width:"100%",padding:"24px 20px",borderRadius:"16px",border:"2px dashed "+V.border,background:V.card,color:V.mutedHi,fontSize:"14px",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",gap:"8px"}}><span style={{fontSize:"34px"}}>📷</span><span>Tap to open camera</span><span style={{fontSize:"11px",color:V.muted}}>Face + ID must both be visible</span></button>}
         {selfSt==="camera"&&<div style={{position:"relative",borderRadius:"16px",overflow:"hidden",border:"1px solid "+V.border}}>
           <video ref={vidRef} style={{width:"100%",display:"block",transform:"scaleX(-1)"}} playsInline muted/>
           <canvas ref={canRef} style={{display:"none"}}/>
+          <div style={{position:"absolute",top:"10px",left:0,right:0,textAlign:"center"}}><span style={{background:"#000a",color:"#fff",fontSize:"10px",fontFamily:F,padding:"4px 12px",borderRadius:"999px"}}>Hold ID next to your face 🪪</span></div>
           <div style={{position:"absolute",bottom:"14px",left:"50%",transform:"translateX(-50%)"}}>
             <button onClick={snap} style={{width:"64px",height:"64px",borderRadius:"50%",background:"linear-gradient(135deg,"+V.from+","+V.to+")",border:"3px solid #fff",cursor:"pointer",fontSize:"26px",display:"flex",alignItems:"center",justifyContent:"center"}}>📸</button>
           </div>
         </div>}
         {selfSt==="captured"&&<div style={{borderRadius:"16px",overflow:"hidden",border:"1px solid "+V.from+"44",position:"relative"}}>
-          {selfImg?<img src={selfImg} style={{width:"100%",display:"block"}} alt="selfie"/>:<div style={{padding:"40px",background:V.from+"08",textAlign:"center"}}><span style={{fontSize:"48px"}}>✓</span></div>}
+          {selfImg?<img src={selfImg} style={{width:"100%",display:"block"}} alt="id-selfie"/>:<div style={{padding:"40px",background:V.from+"08",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:"10px"}}><span style={{fontSize:"48px"}}>✓</span><span style={{color:V.mid,fontSize:"13px",fontFamily:F}}>Photo captured</span></div>}
           <div style={{position:"absolute",top:"10px",right:"10px",background:V.from+"dd",borderRadius:"7px",padding:"3px 9px"}}><span style={{color:"#fff",fontSize:"11px",fontFamily:F,fontWeight:"600"}}>✓ Captured</span></div>
         </div>}
         {err&&<p style={{color:V.warn,fontSize:"11px",fontFamily:F,marginTop:"8px",lineHeight:1.5}}>{err}</p>}
-        <p style={{color:V.muted,fontSize:"10px",fontFamily:F,marginTop:"8px",marginBottom:"18px",textAlign:"center"}}>🔒 Used for verification only</p>
+        <p style={{color:V.muted,fontSize:"10px",fontFamily:F,marginTop:"8px",marginBottom:"14px",textAlign:"center"}}>🔒 Securely verified · Never shown to other users</p>
         <div style={{flex:1}}/>
-        {selfSt==="captured"&&<PBtn onClick={process}>Verify my selfie</PBtn>}
-        {selfSt!=="camera"&&<GBtn onClick={openCam}>{selfSt==="captured"?"Retake":"Open camera"}</GBtn>}
+        {selfSt==="captured"&&<PBtn onClick={process}>Continue →</PBtn>}
+        {selfSt==="captured"&&<GBtn onClick={openCam}>Retake photo</GBtn>}
+        {selfSt==="idle"&&<GBtn onClick={openCam}>Open camera</GBtn>}
       </div>}
       {step==="processing"&&<div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"18px"}}>
         <Mark s={1.1}/><p style={{color:V.text,fontSize:"14px",fontFamily:F,fontWeight:"600"}}>Verifying your selfie…</p>
