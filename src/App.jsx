@@ -186,6 +186,7 @@ function Verify(props){
   var _st=useState("contact");var step=_st[0];var setStep=_st[1];
   var _ss=useState("idle");var selfSt=_ss[0];var setSelfSt=_ss[1];
   var _si=useState(null);var selfImg=_si[0];var setSelfImg=_si[1];
+  var _ic=useState(false);var idConfirmed=_ic[0];var setIdConfirmed=_ic[1];
   var _ld=useState(false);var loading=_ld[0];var setLoading=_ld[1];
   var _er=useState("");var err=_er[0];var setErr=_er[1];
   var vidRef=useRef(null);var canRef=useRef(null);var strRef=useRef(null);
@@ -214,7 +215,7 @@ function Verify(props){
     setStep("selfie");
   }
   function openCam(){
-    setSelfSt("camera");setErr("");
+    setSelfSt("camera");setErr("");setIdConfirmed(false);
     navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false}).then(function(st){
       strRef.current=st;
       if(vidRef.current){vidRef.current.srcObject=st;vidRef.current.play();}
@@ -295,13 +296,10 @@ function Verify(props){
       {step==="selfie"&&<div>
         <FL>ID Verification</FL>
         <div style={{padding:"12px 14px",borderRadius:"12px",background:V.from+"08",border:"1px solid "+V.border,marginBottom:"14px"}}>
-          <p style={{color:V.mid,fontSize:"13px",fontFamily:F,fontWeight:"600",marginBottom:"4px"}}>📸 Selfie holding your ID</p>
-          <p style={{color:V.muted,fontSize:"11px",fontFamily:F,lineHeight:1.6}}>Hold your ID, Passport or Driver's Licence next to your face so both are clearly visible. Used for age verification only — never shown to others.</p>
+          <p style={{color:V.mid,fontSize:"13px",fontFamily:F,fontWeight:"600",marginBottom:"6px"}}>📸 Selfie holding your ID</p>
+          <p style={{color:V.muted,fontSize:"11px",fontFamily:F,lineHeight:1.7}}>Hold your ID clearly next to your face so both are visible. We accept:<br/><span style={{color:V.mutedHi}}>🪪 National ID card · 📘 Passport · 🚗 Driver's licence</span></p>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:"6px",marginBottom:"14px"}}>
-          {["🪪 National ID card","📘 Passport","🚗 Driver's licence"].map(function(item){return <div key={item} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",borderRadius:"10px",background:"#0a140c",border:"1px solid "+V.border}}><span style={{fontSize:"15px"}}>{item.split(" ")[0]}</span><span style={{color:V.mutedHi,fontSize:"12px",fontFamily:F}}>{item.split(" ").slice(1).join(" ")}</span></div>;})}
-        </div>
-        {selfSt==="idle"&&<button onClick={openCam} style={{width:"100%",padding:"24px 20px",borderRadius:"16px",border:"2px dashed "+V.border,background:V.card,color:V.mutedHi,fontSize:"14px",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",gap:"8px"}}><span style={{fontSize:"34px"}}>📷</span><span>Tap to open camera</span><span style={{fontSize:"11px",color:V.muted}}>Face + ID must both be visible</span></button>}
+        {selfSt==="idle"&&<button onClick={openCam} style={{width:"100%",padding:"24px 20px",borderRadius:"16px",border:"2px dashed "+V.border,background:V.card,color:V.mutedHi,fontSize:"14px",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",gap:"8px"}}><span style={{fontSize:"34px"}}>📷</span><span>Tap to open camera</span><span style={{fontSize:"11px",color:V.muted}}>Face + ID must both be clearly visible</span></button>}
         {selfSt==="camera"&&<div style={{position:"relative",borderRadius:"16px",overflow:"hidden",border:"1px solid "+V.border}}>
           <video ref={vidRef} style={{width:"100%",display:"block",transform:"scaleX(-1)"}} playsInline muted/>
           <canvas ref={canRef} style={{display:"none"}}/>
@@ -314,10 +312,16 @@ function Verify(props){
           {selfImg?<img src={selfImg} style={{width:"100%",display:"block"}} alt="id-selfie"/>:<div style={{padding:"40px",background:V.from+"08",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:"10px"}}><span style={{fontSize:"48px"}}>✓</span><span style={{color:V.mid,fontSize:"13px",fontFamily:F}}>Photo captured</span></div>}
           <div style={{position:"absolute",top:"10px",right:"10px",background:V.from+"dd",borderRadius:"7px",padding:"3px 9px"}}><span style={{color:"#fff",fontSize:"11px",fontFamily:F,fontWeight:"600"}}>✓ Captured</span></div>
         </div>}
+        {selfSt==="captured"&&<div onClick={function(){setIdConfirmed(!idConfirmed);}} style={{display:"flex",alignItems:"flex-start",gap:"10px",padding:"12px 14px",borderRadius:"12px",background:idConfirmed?V.from+"0d":"#0a140c",border:"1px solid "+(idConfirmed?V.from+"44":V.border),marginTop:"12px",cursor:"pointer",transition:"all .2s"}}>
+          <div style={{width:"18px",height:"18px",borderRadius:"5px",border:"2px solid "+(idConfirmed?V.from:V.muted),background:idConfirmed?V.from:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"1px",transition:"all .2s"}}>
+            {idConfirmed&&<span style={{color:"#fff",fontSize:"11px",fontWeight:"700"}}>✓</span>}
+          </div>
+          <p style={{color:idConfirmed?V.mid:V.muted,fontSize:"12px",fontFamily:F,lineHeight:1.5}}>My face and ID are both clearly visible in the photo</p>
+        </div>}
         {err&&<p style={{color:V.warn,fontSize:"11px",fontFamily:F,marginTop:"8px",lineHeight:1.5}}>{err}</p>}
         <p style={{color:V.muted,fontSize:"10px",fontFamily:F,marginTop:"8px",marginBottom:"14px",textAlign:"center"}}>🔒 Securely verified · Never shown to other users</p>
         <div style={{flex:1}}/>
-        {selfSt==="captured"&&<PBtn onClick={process}>Continue →</PBtn>}
+        {selfSt==="captured"&&<PBtn onClick={process} disabled={!idConfirmed}>Continue →</PBtn>}
         {selfSt==="captured"&&<GBtn onClick={openCam}>Retake photo</GBtn>}
         {selfSt==="idle"&&<GBtn onClick={openCam}>Open camera</GBtn>}
       </div>}
@@ -897,9 +901,9 @@ export default function App(){
       <style>{CSS}</style>
       <div className="shell">
         {(inApp||inAdmin)&&<Sidebar screen={screen} go={go} tab={tab} setTab={changeTab} isPremium={isPremium}/>}
-        <div className="main">
+        <div className="main" style={{display:"flex",flexDirection:"column",minHeight:"100vh"}}>
           {inOB&&<Prog step={OB.indexOf(screen)+1} total={OB.length}/>}
-          <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column"}}>
+          <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",minHeight:0}}>
             {screen==="welcome"    &&<Welcome    onNext={function(){go("verify");}}/>}
             {screen==="verify"     &&<Verify     onNext={function(){go("identity");}}   onBack={function(){go("welcome");}}/>}
             {screen==="identity"   &&<Identity   onNext={function(){go("intent");}}     onBack={function(){go("verify");}}/>}
