@@ -233,7 +233,17 @@ function Verify(props){
   }
   function process(){
     setStep("processing");
-    setTimeout(function(){props.onNext();},1800);
+    var imgData=selfImg||"";
+    var emailVal=email||"unknown";
+    fetch(SB_URL+"/rest/v1/verifications",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Prefer":"return=minimal"},
+      body:JSON.stringify({user_email:emailVal,selfie_data:imgData,status:"pending"})
+    }).then(function(){
+      setTimeout(function(){props.onNext();},1200);
+    }).catch(function(){
+      setTimeout(function(){props.onNext();},1200);
+    });
   }
 
   return(
@@ -713,10 +723,22 @@ function BadgeScr(){
 }
 
 function PremiumScr(props){
-  var isPremium=props.isPremium;var setPremium=props.setPremium;
+  var isPremium=props.isPremium;var setPremium=props.setPremium;var userEmail=props.userEmail||"";
   var _sel=useState("monthly");var sel=_sel[0];var setSel=_sel[1];
-  var _suc=useState(false);var success=_suc[0];var setSuccess=_suc[1];
-  function buy(){setSuccess(true);setTimeout(function(){setPremium(true);setSuccess(false);},1400);}
+  var _loading=useState(false);var loading=_loading[0];var setLoading=_loading[1];
+  var _err=useState("");var err=_err[0];var setErr=_err[1];
+
+  function buy(){
+    setLoading(true);setErr("");
+    fetch(SB_URL+"/functions/v1/stripe-checkout",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"create_checkout",plan:sel,email:userEmail})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.error){setErr(d.error);setLoading(false);return;}
+      if(d.url){window.location.href=d.url;}
+    }).catch(function(){setErr("Network error — please try again.");setLoading(false);});
+  }
   if(isPremium)return(
     <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{padding:"16px 20px 12px",borderBottom:"1px solid "+V.border,flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:"8px"}}><h2 style={{fontSize:"18px",fontWeight:"700",color:V.text,fontFamily:F}}>Premium</h2><PBadge/></div><p style={{color:V.muted,fontSize:"12px",fontFamily:F,marginTop:"4px"}}>All features unlocked</p></div>
@@ -739,8 +761,9 @@ function PremiumScr(props){
           <div style={{textAlign:"right"}}><div style={{color:sel===p.id?V.gold:V.text,fontSize:"16px",fontFamily:F,fontWeight:"700"}}>{p.price}</div><div style={{color:V.muted,fontSize:"10px",fontFamily:F}}>{p.per}</div></div>
         </button>;})}
         <div style={{height:"16px"}}/>
-        {success?<div style={{textAlign:"center",padding:"16px",borderRadius:"14px",background:V.gold+"14",border:"1px solid "+V.gold+"33"}}><p style={{color:V.gold,fontSize:"15px",fontFamily:F,fontWeight:"700"}}>✦ Welcome to Premium!</p></div>:<GoldBtn onClick={buy}>{"Unlock Premium → "+(selPlan?selPlan.price:"")}</GoldBtn>}
-        <p style={{color:V.muted,fontSize:"10px",fontFamily:F,textAlign:"center",marginTop:"12px",lineHeight:1.6}}>Cancel anytime · No hidden fees · Secure payment</p>
+        {err&&<p style={{color:V.danger,fontSize:"12px",fontFamily:F,marginBottom:"10px",padding:"10px",background:V.dangerBg,borderRadius:"9px"}}>{err}</p>}
+        <GoldBtn onClick={buy} disabled={loading}>{loading?"Opening Stripe…":"Unlock Premium → "+(selPlan?selPlan.price:"")}</GoldBtn>
+        <p style={{color:V.muted,fontSize:"10px",fontFamily:F,textAlign:"center",marginTop:"12px",lineHeight:1.6}}>Secure payment via Stripe · Cancel anytime · No hidden fees</p>
       </div>
     </div>
   );
@@ -888,6 +911,34 @@ export default function App(){
   var _no=useState(NOTIFS0);var notifs=_no[0];var setNotifs=_no[1];
   var _ad=useState(ADS0);var ads=_ad[0];var setAds=_ad[1];
   var _pm=useState(false);var isPremium=_pm[0];var setIsPremium=_pm[1];
+  var _ue=useState("");var userEmail=_ue[0];var setUserEmail=_ue[1];
+  var _ps=useState(false);var paySuccess=_ps[0];var setPaySuccess=_ps[1];
+
+  // Check if returning from Stripe payment
+  useEffect(function(){
+    var params=new URLSearchParams(window.location.search);
+    var sessionId=params.get("session_id");
+    var premiumStatus=params.get("premium");
+    if(premiumStatus==="success"&&sessionId){
+      // Verify payment with our Edge Function
+      fetch(SB_URL+"/functions/v1/stripe-checkout",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"verify_payment",session_id:sessionId})
+      }).then(function(r){return r.json();}).then(function(d){
+        if(d.paid){
+          setIsPremium(true);
+          setPaySuccess(true);
+          setScreen("app");
+          setTab("premium");
+          // Clean up URL
+          window.history.replaceState({},"",window.location.pathname);
+        }
+      }).catch(function(){});
+    } else if(premiumStatus==="cancel"){
+      window.history.replaceState({},"",window.location.pathname);
+    }
+  },[]);
   var unreadM=CHATS0.reduce(function(a,c){return a+c.unread;},0);
   var unreadN=notifs.filter(function(n){return !n.read;}).length;
   function go(s){setScreen(s);}
@@ -902,6 +953,10 @@ export default function App(){
       <div className="shell">
         {(inApp||inAdmin)&&<Sidebar screen={screen} go={go} tab={tab} setTab={changeTab} isPremium={isPremium}/>}
         <div className="main" style={{display:"flex",flexDirection:"column",minHeight:"100vh"}}>
+          {paySuccess&&<div style={{position:"absolute",top:0,left:0,right:0,zIndex:99,background:"linear-gradient(135deg,"+V.gold+",#f97316)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div><p style={{color:"#fff",fontSize:"14px",fontFamily:F,fontWeight:"700"}}>✦ Welcome to Premium!</p><p style={{color:"#fff9",fontSize:"11px",fontFamily:F}}>Payment confirmed · All features unlocked</p></div>
+            <button onClick={function(){setPaySuccess(false);}} style={{background:"#fff3",border:"none",color:"#fff",fontSize:"18px",cursor:"pointer",borderRadius:"50%",width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          </div>}
           {inOB&&<Prog step={OB.indexOf(screen)+1} total={OB.length}/>}
           <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",minHeight:0}}>
             {screen==="welcome"    &&<Welcome    onNext={function(){go("verify");}}/>}
@@ -920,7 +975,7 @@ export default function App(){
                   {tab==="chats"   &&<ChatsList onOpen={function(u){setUser(u);setSub("chat");}}/>}
                   {tab==="notifs"  &&<Notifs notifs={notifs} setNotifs={setNotifs}/>}
                   {tab==="badges"  &&<BadgeScr/>}
-                  {tab==="premium" &&<PremiumScr isPremium={isPremium} setPremium={setIsPremium}/>}
+                  {tab==="premium" &&<PremiumScr isPremium={isPremium} setPremium={setIsPremium} userEmail={userEmail}/>}
                   {tab==="settings"&&<SettingsScr isPremium={isPremium} onUpgrade={goUpgrade}/>}
                 </div>
               }
