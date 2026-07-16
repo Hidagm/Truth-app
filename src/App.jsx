@@ -330,8 +330,7 @@ function Verify(props){
         </div>}
         {err&&<p style={{color:V.warn,fontSize:"11px",fontFamily:F,marginTop:"8px",lineHeight:1.5}}>{err}</p>}
         <p style={{color:V.muted,fontSize:"10px",fontFamily:F,marginTop:"8px",marginBottom:"14px",textAlign:"center"}}>🔒 Securely verified · Never shown to other users</p>
-        <div style={{flex:1}}/>
-        {selfSt==="captured"&&<PBtn onClick={process} disabled={!idConfirmed}>Continue →</PBtn>}
+        {selfSt==="captured"&&<PBtn onClick={process} disabled={!idConfirmed} style={{marginBottom:"10px"}}>Continue →</PBtn>}
         {selfSt==="captured"&&<GBtn onClick={openCam}>Retake photo</GBtn>}
         {selfSt==="idle"&&<GBtn onClick={openCam}>Open camera</GBtn>}
       </div>}
