@@ -1,6 +1,40 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const V={from:"#34d399",to:"#818cf8",mid:"#6ee7b7",bg:"#060d09",card:"#090f0b",border:"#34d39918",borderMid:"#34d39932",text:"#c8ecd8",muted:"#2a4a36",mutedHi:"#3d6b4f",danger:"#f87171",dangerBg:"#f8717114",warn:"#fbbf24",gold:"#f59e0b",goldBg:"#f59e0b14"};
+const THEMES={
+  dark:{
+    name:"Dark",icon:"🌙",
+    from:"#34d399",to:"#818cf8",mid:"#6ee7b7",
+    bg:"#060d09",card:"#090f0b",
+    border:"#34d39918",borderMid:"#34d39932",
+    text:"#c8ecd8",muted:"#2a4a36",mutedHi:"#3d6b4f",
+    danger:"#f87171",dangerBg:"#f8717114",
+    warn:"#fbbf24",gold:"#f59e0b",goldBg:"#f59e0b14",
+    navBg:"#090f0b",inputBg:"#0b150d",chatMe:"#34d39912",
+  },
+  lightGreen:{
+    name:"Sage",icon:"🌿",
+    from:"#16a34a",to:"#0d9488",mid:"#15803d",
+    bg:"#f0fdf4",card:"#ffffff",
+    border:"#16a34a22",borderMid:"#16a34a44",
+    text:"#14532d",muted:"#86efac",mutedHi:"#15803d",
+    danger:"#dc2626",dangerBg:"#dc262612",
+    warn:"#d97706",gold:"#ca8a04",goldBg:"#ca8a0412",
+    navBg:"#ffffff",inputBg:"#f0fdf4",chatMe:"#bbf7d022",
+  },
+  light:{
+    name:"Light",icon:"☀️",
+    from:"#7c3aed",to:"#db2777",mid:"#8b5cf6",
+    bg:"#fafafa",card:"#ffffff",
+    border:"#7c3aed18",borderMid:"#7c3aed33",
+    text:"#1e1b4b",muted:"#c4b5fd",mutedHi:"#6d28d9",
+    danger:"#dc2626",dangerBg:"#dc262612",
+    warn:"#d97706",gold:"#ca8a04",goldBg:"#ca8a0412",
+    navBg:"#ffffff",inputBg:"#f5f3ff",chatMe:"#ede9fe",
+  },
+};
+
+var V=THEMES.dark;
+function getTheme(key){return THEMES[key]||THEMES.dark;}
 const F="'DM Sans',system-ui,sans-serif";
 const SERIF="'Cormorant Garamond',serif";
 
@@ -152,6 +186,89 @@ function PBadge(){return <span style={{padding:"2px 7px",borderRadius:"999px",fo
 function SettSec(props){return <div style={{marginBottom:"22px"}}><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px"}}><div style={{height:"1px",flex:1,background:V.border}}/><span style={{color:V.muted,fontSize:"10px",letterSpacing:".1em",fontFamily:F,whiteSpace:"nowrap"}}>{props.t}</span><div style={{height:"1px",flex:1,background:V.border}}/></div>{props.c}</div>;}
 function SettRow(props){return <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 0",borderBottom:"1px solid "+V.border}}><div style={{flex:1,marginRight:"14px"}}><div style={{display:"flex",alignItems:"center",gap:"6px"}}><div style={{color:V.text,fontSize:"13px",fontFamily:F,fontWeight:"500"}}>{props.l}</div>{props.prem&&<PBadge/>}</div>{props.d&&<div style={{color:V.muted,fontSize:"11px",fontFamily:F,marginTop:"2px",lineHeight:1.4}}>{props.d}</div>}</div>{props.children}</div>;}
 
+function PinDots(props2){
+  var arr=props2.arr;var refs3=props2.refs3;var onChange=props2.onChange;var onKey=props2.onKey;
+  return <div style={{display:"flex",gap:"12px",justifyContent:"center",marginBottom:"24px"}}>
+    {arr.map(function(v,i){return <input key={i} ref={refs3[i]} value={v?"●":""} onChange={function(e){onChange(e.target.value,i);}} onKeyDown={function(e){onKey(e,i);}} maxLength={1} style={{width:"52px",height:"52px",borderRadius:"12px",background:v?V.from+"22":V.inputBg,border:"2px solid "+(v?V.from:V.border),color:V.text,fontSize:"24px",textAlign:"center",fontFamily:F,outline:"none",cursor:"pointer"}}/>;})}</div>;
+}
+
+function PinSetup(props){
+  var [pin,setPin]=useState(["","","",""]);
+  var [confirm,setConfirm]=useState(["","","",""]);
+  var [step,setStep]=useState("create");
+  var [err,setErr]=useState("");
+  var refs=[useRef(null),useRef(null),useRef(null),useRef(null)];
+  var refs2=[useRef(null),useRef(null),useRef(null),useRef(null)];
+  function handlePin(val,idx,arr,setArr,refArr,next){
+    var v=val.replace(/\D/g,"").slice(-1);
+    var n=[].concat(arr);n[idx]=v;setArr(n);
+    if(v&&idx<3)refArr[idx+1].current&&refArr[idx+1].current.focus();
+    if(idx===3&&v&&next)next(n.join(""));
+  }
+  function handleKey(e,idx,arr,setArr,refArr){
+    if(e.key==="Backspace"&&!arr[idx]&&idx>0){refArr[idx-1].current&&refArr[idx-1].current.focus();}
+  }
+  function checkConfirm(val){
+    if(val===pin.join("")){localStorage.setItem("truth_pin",val);props.onDone();}
+    else{setErr("PINs don't match — try again");setConfirm(["","","",""]);setTimeout(function(){refs2[0].current&&refs2[0].current.focus();},100);}
+  }
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",padding:"28px 22px",alignItems:"center",justifyContent:"center",background:V.bg}}>
+      <Mark s={1}/>
+      <div style={{height:"20px"}}/>
+      {step==="create"&&<div style={{width:"100%",maxWidth:"300px",textAlign:"center"}}>
+        <h2 style={{color:V.text,fontSize:"22px",fontWeight:"700",fontFamily:F,marginBottom:"8px"}}>Create your PIN</h2>
+        <p style={{color:V.muted,fontSize:"13px",fontFamily:F,marginBottom:"28px",lineHeight:1.6}}>Choose a 4-digit PIN to quickly access Truth in the future. You'll still get a 6-digit code by email for extra security.</p>
+        <PinDots arr={pin} refs3={refs} onChange={function(v,i){handlePin(v,i,pin,setPin,refs,function(full){setPin(full.split(""));setStep("confirm");setTimeout(function(){refs2[0].current&&refs2[0].current.focus();},100);});}} onKey={function(e,i){handleKey(e,i,pin,setPin,refs);}}/>
+        <p style={{color:V.muted,fontSize:"11px",fontFamily:F}}>Enter 4 digits</p>
+      </div>}
+      {step==="confirm"&&<div style={{width:"100%",maxWidth:"300px",textAlign:"center"}}>
+        <h2 style={{color:V.text,fontSize:"22px",fontWeight:"700",fontFamily:F,marginBottom:"8px"}}>Confirm your PIN</h2>
+        <p style={{color:V.muted,fontSize:"13px",fontFamily:F,marginBottom:"28px"}}>Enter the same PIN again to confirm.</p>
+        {err&&<p style={{color:V.danger,fontSize:"12px",fontFamily:F,marginBottom:"14px",padding:"8px 12px",background:V.dangerBg,borderRadius:"9px"}}>{err}</p>}
+        <PinDots arr={confirm} refs3={refs2} onChange={function(v,i){handlePin(v,i,confirm,setConfirm,refs2,checkConfirm);}} onKey={function(e,i){handleKey(e,i,confirm,setConfirm,refs2);}}/>
+        <button onClick={function(){setStep("create");setPin(["","","",""]);setConfirm([]);setErr("");}} style={{background:"none",border:"none",color:V.muted,fontSize:"12px",cursor:"pointer",fontFamily:F}}>← Change PIN</button>
+      </div>}
+    </div>
+  );
+}
+
+function PinLogin(props){
+  var [pin,setPin]=useState(["","","",""]);
+  var [err,setErr]=useState("");
+  var [showEmail,setShowEmail]=useState(false);
+  var refs=[useRef(null),useRef(null),useRef(null),useRef(null)];
+  useEffect(function(){setTimeout(function(){refs[0].current&&refs[0].current.focus();},200);},[]);
+  function handlePin(val,idx){
+    var v=val.replace(/\D/g,"").slice(-1);
+    var n=[].concat(pin);n[idx]=v;setPin(n);
+    if(v&&idx<3)refs[idx+1].current&&refs[idx+1].current.focus();
+    if(idx===3&&v){
+      var full=n.join("");
+      var saved=localStorage.getItem("truth_pin");
+      if(full===saved)props.onSuccess();
+      else{setErr("Wrong PIN — try again");setPin(["","","",""]);setTimeout(function(){refs[0].current&&refs[0].current.focus();},100);}
+    }
+  }
+  function handleKey(e,idx){if(e.key==="Backspace"&&!pin[idx]&&idx>0)refs[idx-1].current&&refs[idx-1].current.focus();}
+  if(showEmail){props.onEmailFallback();return null;}
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 22px",background:V.bg}}>
+      <Mark s={1}/>
+      <div style={{height:"20px"}}/>
+      <div style={{width:"100%",maxWidth:"300px",textAlign:"center"}}>
+        <h2 style={{color:V.text,fontSize:"22px",fontWeight:"700",fontFamily:F,marginBottom:"6px"}}>Welcome back</h2>
+        <p style={{color:V.muted,fontSize:"13px",fontFamily:F,marginBottom:"28px"}}>Enter your 4-digit PIN to continue</p>
+        {err&&<p style={{color:V.danger,fontSize:"12px",fontFamily:F,marginBottom:"14px",padding:"8px 12px",background:V.dangerBg,borderRadius:"9px"}}>{err}</p>}
+        <div style={{display:"flex",gap:"12px",justifyContent:"center",marginBottom:"28px"}}>
+          {pin.map(function(v,i){return <input key={i} ref={refs[i]} value={v?"●":""} onChange={function(e){handlePin(e.target.value,i);}} onKeyDown={function(e){handleKey(e,i);}} maxLength={1} style={{width:"52px",height:"52px",borderRadius:"12px",background:v?V.from+"22":V.inputBg,border:"2px solid "+(v?V.from:V.border),color:V.text,fontSize:"24px",textAlign:"center",fontFamily:F,outline:"none"}}/>;}) }
+        </div>
+        <button onClick={function(){setShowEmail(true);}} style={{background:"none",border:"none",color:V.muted,fontSize:"12px",cursor:"pointer",fontFamily:F}}>Use email code instead →</button>
+      </div>
+    </div>
+  );
+}
+
 function Welcome(props){
   var _v=useState(false);var vis=_v[0];var setVis=_v[1];
   useEffect(function(){var t=setTimeout(function(){setVis(true);},80);return function(){clearTimeout(t);};}, []);
@@ -201,7 +318,14 @@ function Verify(props){
   function verifyOtp(){
     setLoading(true);setErr("");
     var p=useEmail?{email:email,token:otp,type:"email"}:{phone:dial.c+phone,token:otp,type:"sms"};
-    sb.verifyOtp(p).then(function(r){if(r.error)setErr(r.error.message);else setStep("dob");setLoading(false);});
+    sb.verifyOtp(p).then(function(r){
+      if(r.error)setErr(r.error.message);
+      else{
+        if(props.onEmailConfirmed&&email)props.onEmailConfirmed(email);
+        setStep("dob");
+      }
+      setLoading(false);
+    });
   }
   function verifyDob(){
     setDobErr("");
@@ -234,7 +358,7 @@ function Verify(props){
   function process(){
     setStep("processing");
     var imgData=selfImg||"";
-    var emailVal=email||"unknown";
+    var emailVal=email||props.userEmail||"unknown";
     fetch(SB_URL+"/rest/v1/verifications",{
       method:"POST",
       headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Prefer":"return=minimal"},
@@ -769,7 +893,7 @@ function PremiumScr(props){
 }
 
 function SettingsScr(props){
-  var isPremium=props.isPremium;var onUpgrade=props.onUpgrade;
+  var isPremium=props.isPremium;var onUpgrade=props.onUpgrade;var theme=props.theme||"dark";var onTheme=props.onTheme||function(){};
   var _am=useState(false);var anonMode=_am[0];var setAnonMode=_am[1];
   var _ha=useState(false);var hideAge=_ha[0];var setHideAge=_ha[1];
   var _hg=useState(false);var hideGender=_hg[0];var setHideGender=_hg[1];
@@ -786,6 +910,20 @@ function SettingsScr(props){
     <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{padding:"16px 20px 12px",borderBottom:"1px solid "+V.border,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}><h2 style={{fontSize:"18px",fontWeight:"700",color:V.text,fontFamily:F}}>Privacy & Settings</h2><button onClick={function(){setSaved(true);setTimeout(function(){setSaved(false);},2000);}} style={{padding:"6px 13px",borderRadius:"9px",background:"linear-gradient(135deg,"+V.from+","+V.to+")",border:"none",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:F}}>{saved?"Saved ✓":"Save"}</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"16px 20px 36px"}}>
+        <SettSec t="APPEARANCE" c={<div>
+          <p style={{color:V.muted,fontSize:"11px",fontFamily:F,marginBottom:"12px"}}>Choose your preferred theme</p>
+          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+            {Object.keys(THEMES).map(function(key){
+              var th=THEMES[key];
+              var isActive=props.theme===key;
+              return <button key={key} onClick={function(){props.onTheme(key);}} style={{padding:"12px 14px",borderRadius:"12px",border:"1px solid "+(isActive?th.from:V.border),background:isActive?th.from+"14":V.card,cursor:"pointer",fontFamily:F,display:"flex",alignItems:"center",gap:"12px",textAlign:"left",transition:"all .2s"}}>
+                <div style={{width:"32px",height:"32px",borderRadius:"8px",background:"linear-gradient(135deg,"+th.from+","+th.to+")",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px"}}>{th.icon}</div>
+                <div style={{flex:1}}><p style={{color:isActive?th.from:V.text,fontSize:"13px",fontFamily:F,fontWeight:"600",marginBottom:"2px"}}>{th.name}</p><p style={{color:V.muted,fontSize:"11px",fontFamily:F}}>{key==="dark"?"Mysterious & private":key==="lightGreen"?"Natural & calm":"Bright & bold"}</p></div>
+                {isActive&&<div style={{width:"18px",height:"18px",borderRadius:"50%",background:th.from,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#fff",fontSize:"10px",fontWeight:"700"}}>✓</span></div>}
+              </button>;
+            })}
+          </div>
+        </div>}/>
         <SettSec t="IDENTITY" c={<div>
           <SettRow l="Anonymous mode" d="Hide real name and photo"><Tog value={anonMode} onChange={setAnonMode}/></SettRow>
           <SettRow l="Incognito mode" d="Browse unseen, hide read receipts and online status" prem={true}>{isPremium?<Tog value={incognito} onChange={setIncognito}/>:<button onClick={onUpgrade} style={{padding:"4px 10px",borderRadius:"7px",background:V.goldBg,border:"1px solid "+V.gold+"33",color:V.gold,fontSize:"11px",cursor:"pointer",fontFamily:F}}>Unlock</button>}</SettRow>
@@ -910,7 +1048,26 @@ export default function App(){
   var _no=useState(NOTIFS0);var notifs=_no[0];var setNotifs=_no[1];
   var _ad=useState(ADS0);var ads=_ad[0];var setAds=_ad[1];
   var _pm=useState(false);var isPremium=_pm[0];var setIsPremium=_pm[1];
-  var _ue=useState("");var userEmail=_ue[0];var setUserEmail=_ue[1];
+  var _th=useState("dark");var theme=_th[0];var setThemeKey=_th[1];
+  var _pin=useState(false);var needPin=_pin[0];var setNeedPin=_pin[1];
+  var _ps2=useState(false);var setupPin=_ps2[0];var setSetupPin=_ps2[1];
+
+  function handleTheme(key){
+    setThemeKey(key);
+    V=getTheme(key);
+    localStorage.setItem("truth_theme",key);
+  }
+
+  useEffect(function(){
+    var saved=localStorage.getItem("truth_theme");
+    if(saved&&THEMES[saved]){setThemeKey(saved);V=getTheme(saved);}
+    var savedPin=localStorage.getItem("truth_pin");
+    var wasLoggedIn=localStorage.getItem("truth_loggedin");
+    if(savedPin&&wasLoggedIn){setNeedPin(true);}
+  },[]);
+
+  // Check if returning from Stripe payment
+  var _ue2=useState("");var userEmail=_ue2[0];var setUserEmail=_ue2[1];
   var _ps=useState(false);var paySuccess=_ps[0];var setPaySuccess=_ps[1];
 
   // Check if returning from Stripe payment
@@ -919,7 +1076,6 @@ export default function App(){
     var sessionId=params.get("session_id");
     var premiumStatus=params.get("premium");
     if(premiumStatus==="success"&&sessionId){
-      // Verify payment with our Edge Function
       fetch(SB_URL+"/functions/v1/stripe-checkout",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -930,7 +1086,6 @@ export default function App(){
           setPaySuccess(true);
           setScreen("app");
           setTab("premium");
-          // Clean up URL
           window.history.replaceState({},"",window.location.pathname);
         }
       }).catch(function(){});
@@ -938,6 +1093,7 @@ export default function App(){
       window.history.replaceState({},"",window.location.pathname);
     }
   },[]);
+
   var unreadM=CHATS0.reduce(function(a,c){return a+c.unread;},0);
   var unreadN=notifs.filter(function(n){return !n.read;}).length;
   function go(s){setScreen(s);}
@@ -946,6 +1102,30 @@ export default function App(){
   var inAdmin=screen==="admin";
   function changeTab(t){setTab(t);setSub(null);}
   function goUpgrade(){changeTab("premium");}
+
+  // PIN login screen for returning users
+  if(needPin){
+    return(
+      <div style={{background:V.bg,minHeight:"100vh"}}>
+        <style>{CSS}</style>
+        <PinLogin
+          onSuccess={function(){setNeedPin(false);setScreen("app");}}
+          onEmailFallback={function(){setNeedPin(false);setScreen("verify");}}
+        />
+      </div>
+    );
+  }
+
+  // PIN setup after first login
+  if(setupPin){
+    return(
+      <div style={{background:V.bg,minHeight:"100vh"}}>
+        <style>{CSS}</style>
+        <PinSetup onDone={function(){setSetupPin(false);setScreen("app");setTab("feed");localStorage.setItem("truth_loggedin","1");}}/>
+      </div>
+    );
+  }
+
   return(
     <div style={{background:V.bg,minHeight:"100vh"}}>
       <style>{CSS}</style>
@@ -959,12 +1139,16 @@ export default function App(){
           {inOB&&<Prog step={OB.indexOf(screen)+1} total={OB.length}/>}
           <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",minHeight:0}}>
             {screen==="welcome"    &&<Welcome    onNext={function(){go("verify");}}/>}
-            {screen==="verify"     &&<Verify     onNext={function(){go("identity");}}   onBack={function(){go("welcome");}}/>}
+            {screen==="verify"     &&<Verify     onNext={function(){
+              var hasPin=localStorage.getItem("truth_pin");
+              if(!hasPin){setSetupPin(true);}
+              else{go("identity");}
+            }} onBack={function(){go("welcome");}} onEmailConfirmed={function(e){setUserEmail(e);}} userEmail={userEmail}/>}
             {screen==="identity"   &&<Identity   onNext={function(){go("intent");}}     onBack={function(){go("verify");}}/>}
             {screen==="intent"     &&<Intent     onNext={function(){go("turnons");}}    onBack={function(){go("identity");}}/>}
             {screen==="turnons"    &&<TurnOns    onNext={function(){go("boundaries");}} onBack={function(){go("intent");}}/>}
             {screen==="boundaries" &&<Boundaries onNext={function(){go("profile");}}    onBack={function(){go("turnons");}}/>}
-            {screen==="profile"    &&<Profile    onNext={function(){go("app");setTab("feed");}} onBack={function(){go("boundaries");}}/>}
+            {screen==="profile"    &&<Profile    onNext={function(){go("app");setTab("feed");localStorage.setItem("truth_loggedin","1");}} onBack={function(){go("boundaries");}}/>}
             {inAdmin               &&<AdminScr   onExit={function(){go("app");setTab("feed");}}/>}
             {inApp&&<div style={{flex:1,display:"flex",flexDirection:"column"}}>
               {sub==="chat"
@@ -975,7 +1159,7 @@ export default function App(){
                   {tab==="notifs"  &&<Notifs notifs={notifs} setNotifs={setNotifs}/>}
                   {tab==="badges"  &&<BadgeScr/>}
                   {tab==="premium" &&<PremiumScr isPremium={isPremium} setPremium={setIsPremium} userEmail={userEmail}/>}
-                  {tab==="settings"&&<SettingsScr isPremium={isPremium} onUpgrade={goUpgrade}/>}
+                  {tab==="settings"&&<SettingsScr isPremium={isPremium} onUpgrade={goUpgrade} theme={theme} onTheme={handleTheme}/>}
                 </div>
               }
             </div>}
